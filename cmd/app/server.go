@@ -36,7 +36,7 @@ func main() {
 	productRepository := products.NewRepository(db)
 	variantRepository := variants.NewRepository(db)
 	productService := products.NewUsecase(productRepository, variantRepository)
-	variantService := variants.NewUsecase(variantRepository)
+	variantService := variants.NewUsecase(variantRepository, productRepository)
 
 	v1 := e.Group("/api/v1")
 	products.NewHandler(v1, productService)

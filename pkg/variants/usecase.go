@@ -1,6 +1,7 @@
 package variants
 
 import (
+	"errors"
 	"log"
 
 	"github.com/bpradana/devcamp_pe_bintangpradanaerlanggaputra/pkg/domain"
@@ -8,11 +9,13 @@ import (
 
 type VariantUsecase struct {
 	variantRepo domain.VariantRepository
+	productRepo domain.ProductRepository
 }
 
-func NewUsecase(variantRepo domain.VariantRepository) *VariantUsecase {
+func NewUsecase(variantRepo domain.VariantRepository, productRepo domain.ProductRepository) *VariantUsecase {
 	return &VariantUsecase{
 		variantRepo: variantRepo,
+		productRepo: productRepo,
 	}
 }
 
@@ -37,7 +40,18 @@ func (u *VariantUsecase) GetByID(id int) (domain.Variant, error) {
 }
 
 func (u *VariantUsecase) Create(variant *domain.Variant) (*domain.Variant, error) {
-	variant, err := u.variantRepo.Create(variant)
+	// check if product exists and eligible to create variant
+	product, err := u.productRepo.GetByID(variant.ProductID)
+	if err != nil {
+		log.Println("[VariantUsecase] [Create] error getting product by id, err: ", err.Error())
+		return nil, err
+	}
+	if product.Price != 0 || product.Stock != 0 || product.Discount != 0 {
+		log.Println("[VariantUsecase] [Create] product is not eligible to create variant")
+		return nil, errors.New("product is not eligible to create variant")
+	}
+
+	variant, err = u.variantRepo.Create(variant)
 	if err != nil {
 		log.Println("[VariantUsecase] [Create] error creating variant, err: ", err.Error())
 		return nil, err
